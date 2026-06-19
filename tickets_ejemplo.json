@@ -1,0 +1,70 @@
+{
+  "descripcion": "Base de datos simulada del sistema SoporteBot. Este archivo representa la estructura de tickets generados durante una sesión de uso del chatbot.",
+  "categorias": {
+    "1": {
+      "nombre": "Hardware",
+      "soluciones": [
+        "Verificá que el cable de alimentación esté bien conectado.",
+        "Revisá que el monitor esté encendido y el cable de video conectado.",
+        "Apagá el equipo, esperá 10 segundos y volvé a encenderlo.",
+        "Si el problema persiste, el equipo podría requerir revisión presencial."
+      ]
+    },
+    "2": {
+      "nombre": "Software",
+      "soluciones": [
+        "Cerrá la aplicación y volvé a abrirla.",
+        "Verificá que el sistema operativo esté actualizado.",
+        "Intentá desinstalar y reinstalar el programa afectado.",
+        "Revisá que el antivirus no esté bloqueando el proceso."
+      ]
+    },
+    "3": {
+      "nombre": "Red / Conectividad",
+      "soluciones": [
+        "Reiniciá el router: desconectalo 30 segundos y volvé a conectarlo.",
+        "Verificá que el cable de red esté bien enchufado.",
+        "Probá conectarte por Wi-Fi o cable para descartar el medio.",
+        "Revisá si otros equipos tienen el mismo problema."
+      ]
+    },
+    "4": {
+      "nombre": "Acceso / Contraseñas",
+      "soluciones": [
+        "Usá la opción '¿Olvidaste tu contraseña?' en la pantalla de inicio.",
+        "Verificá que el BLOQ MAYÚS no esté activado.",
+        "Si tu cuenta fue bloqueada, necesitás contactar a RRHH.",
+        "Revisá que el correo de recuperación sea el correcto."
+      ]
+    }
+  },
+  "tickets_ejemplo": [
+    {
+      "id": "TK-0001-ABC123",
+      "nombre": "María López",
+      "categoria": "Hardware",
+      "descripcion": "La PC no enciende al presionar el botón de encendido.",
+      "estado": "cerrado",
+      "fecha": "17/6/2025, 10:32:15",
+      "calificacion": 5
+    },
+    {
+      "id": "TK-0002-DEF456",
+      "nombre": "Carlos Pérez",
+      "categoria": "Red / Conectividad",
+      "descripcion": "No tengo acceso a internet desde esta mañana.",
+      "estado": "cerrado",
+      "fecha": "17/6/2025, 11:05:44",
+      "calificacion": 4
+    },
+    {
+      "id": "TK-0003-GHI789",
+      "nombre": "Ana Gómez",
+      "categoria": "Software",
+      "descripcion": "El sistema de gestión se cierra solo al intentar abrir un informe.",
+      "estado": "escalado_N2",
+      "fecha": "17/6/2025, 14:20:03",
+      "calificacion": null
+    }
+  ]
+}

@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SoporteBot – Nivel 1 | TechCorp</title>
+<style>
+  /* ── TOKENS ── */
+  :root {
+    --bg:        #0f1117;
+    --surface:   #1a1d27;
+    --surface2:  #22263a;
+    --border:    #2e3350;
+    --accent:    #4f7cff;
+    --accent2:   #38d9a9;
+    --warn:      #f0a04b;
+    --danger:    #e05c5c;
+    --text:      #e8eaf6;
+    --text2:     #8b90b0;
+    --bot-bg:    #1e2540;
+    --user-bg:   #2d3a6e;
+    --radius:    12px;
+    --font:      'Segoe UI', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── LAYOUT ── */
+  .app {
+    width: 100%;
+    max-width: 780px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .bot-avatar {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .bot-info h1 { font-size: 15px; font-weight: 600; letter-spacing: .2px; }
+  .bot-info p  { font-size: 12px; color: var(--text2); }
+  .status-dot {
+    width: 8px; height: 8px;
+    background: var(--accent2);
+    border-radius: 50%;
+    margin-left: auto;
+    box-shadow: 0 0 6px var(--accent2);
+  }
+
+  /* ── ESTADO INTERNO (debug panel) ── */
+  .state-bar {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    padding: 6px 20px;
+    font-size: 11px;
+    color: var(--text2);
+    display: flex; gap: 16px; flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+  .state-bar span b { color: var(--accent); }
+
+  /* ── MENSAJES ── */
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scroll-behavior: smooth;
+  }
+  .messages::-webkit-scrollbar { width: 4px; }
+  .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .bubble-wrap {
+    display: flex;
+    gap: 8px;
+    max-width: 85%;
+  }
+  .bubble-wrap.bot  { align-self: flex-start; }
+  .bubble-wrap.user { align-self: flex-end; flex-direction: row-reverse; }
+
+  .avatar-sm {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    margin-top: 2px;
+  }
+  .bot  .avatar-sm { background: var(--bot-bg); border: 1px solid var(--accent); }
+  .user .avatar-sm { background: var(--user-bg); }
+
+  .bubble {
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+  }
+  .bot  .bubble { background: var(--bot-bg);  border: 1px solid var(--border); border-top-left-radius: 2px; }
+  .user .bubble { background: var(--user-bg); border-top-right-radius: 2px; }
+
+  .bubble.error {
+    background: #2a1a1a;
+    border-color: var(--danger);
+    color: #f4a0a0;
+  }
+  .bubble.warn {
+    background: #241d10;
+    border-color: var(--warn);
+    color: #f5c87a;
+  }
+
+  /* opciones rápidas */
+  .options {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-top: 8px;
+    padding-left: 36px;
+  }
+  .opt-btn {
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .opt-btn:hover { background: var(--accent); color: #fff; }
+  .opt-btn:disabled { opacity: .4; cursor: default; pointer-events: none; }
+
+  /* estrellas */
+  .stars { display: flex; gap: 6px; padding-left: 36px; margin-top: 8px; }
+  .star-btn {
+    background: none; border: none;
+    font-size: 22px; cursor: pointer;
+    color: var(--border);
+    transition: color .1s, transform .1s;
+  }
+  .star-btn:hover, .star-btn.active { color: var(--warn); transform: scale(1.2); }
+
+  /* ticket card */
+  .ticket-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.7;
+    margin-top: 4px;
+  }
+  .ticket-card .tk-id { font-size: 11px; color: var(--accent2); letter-spacing: .5px; margin-bottom: 4px; }
+  .ticket-card .tk-row { display: flex; gap: 6px; }
+  .ticket-card .tk-label { color: var(--text2); min-width: 80px; }
+
+  /* typing indicator */
+  .typing { display: flex; gap: 4px; padding: 10px 14px; }
+  .typing span {
+    width: 7px; height: 7px;
+    background: var(--text2);
+    border-radius: 50%;
+    animation: bounce .9s infinite;
+  }
+  .typing span:nth-child(2) { animation-delay: .15s; }
+  .typing span:nth-child(3) { animation-delay: .30s; }
+  @keyframes bounce {
+    0%,60%,100% { transform: translateY(0); }
+    30%          { transform: translateY(-5px); }
+  }
+
+  /* ── INPUT ── */
+  .input-area {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex; gap: 10px;
+    flex-shrink: 0;
+  }
+  #user-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  #user-input:focus { border-color: var(--accent); }
+  #user-input::placeholder { color: var(--text2); }
+
+  #send-btn {
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    border-radius: var(--radius);
+    padding: 10px 18px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  #send-btn:hover { opacity: .85; }
+  #send-btn:disabled { opacity: .4; cursor: default; }
+
+  /* ── RESET ── */
+  .reset-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text2);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: border-color .15s;
+  }
+  .reset-btn:hover { border-color: var(--danger); color: var(--danger); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="bot-avatar">🤖</div>
+    <div class="bot-info">
+      <h1>SoporteBot – TechCorp</h1>
+      <p>Soporte técnico automatizado · Nivel 1</p>
+    </div>
+    <div class="status-dot" title="En línea"></div>
+  </header>
+
+  <!-- BARRA DE ESTADO INTERNO -->
+  <div class="state-bar" id="state-bar">
+    <span>Estado: <b id="dbg-state">INICIO</b></span>
+    <span>Usuario: <b id="dbg-user">—</b></span>
+    <span>Categoría: <b id="dbg-cat">—</b></span>
+    <span>Ticket: <b id="dbg-ticket">—</b></span>
+    <span>Intentos inválidos: <b id="dbg-retries">0</b></span>
+  </div>
+
+  <!-- MENSAJES -->
+  <div class="messages" id="messages"></div>
+
+  <!-- INPUT -->
+  <div class="input-area">
+    <button class="reset-btn" onclick="resetBot()">↺ Reiniciar</button>
+    <input type="text" id="user-input" placeholder="Escribí tu respuesta..." autocomplete="off"/>
+    <button id="send-btn" onclick="handleUserInput()">Enviar</button>
+  </div>
+
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   BASE DE DATOS SIMULADA (JSON)
+   Representa el archivo tickets.json en el servidor
+═══════════════════════════════════════════════ */
+const DB = {
+  tickets: [],
+  categorias: {
+    "1": { nombre: "Hardware", soluciones: [
+      "Verificá que el cable de alimentación esté bien conectado.",
+      "Revisá que el monitor esté encendido y el cable de video conectado.",
+      "Apagá el equipo, esperá 10 segundos y volvé a encenderlo.",
+      "Si el problema persiste, el equipo podría requerir revisión presencial."
+    ]},
+    "2": { nombre: "Software", soluciones: [
+      "Cerrá la aplicación y volvé a abrirla.",
+      "Verificá que el sistema operativo esté actualizado.",
+      "Intentá desinstalar y reinstalar el programa afectado.",
+      "Revisá que el antivirus no esté bloqueando el proceso."
+    ]},
+    "3": { nombre: "Red / Conectividad", soluciones: [
+      "Reiniciá el router: desconectalo 30 segundos y volvé a conectarlo.",
+      "Verificá que el cable de red esté bien enchufado.",
+      "Probá conectarte por Wi-Fi o cable para descartar el medio.",
+      "Revisá si otros equipos tienen el mismo problema."
+    ]},
+    "4": { nombre: "Acceso / Contraseñas", soluciones: [
+      "Usá la opción '¿Olvidaste tu contraseña?' en la pantalla de inicio.",
+      "Verificá que el BLOQ MAYÚS no esté activado.",
+      "Si tu cuenta fue bloqueada, necesitás contactar a RRHH.",
+      "Revisá que el correo de recuperación sea el correcto."
+    ]}
+  },
+  generarId() {
+    const n = String(this.tickets.length + 1).padStart(4, '0');
+    return `TK-${n}-${Date.now().toString(36).toUpperCase()}`;
+  },
+  crearTicket(nombre, categoria, descripcion) {
+    const ticket = {
+      id: this.generarId(),
+      nombre,
+      categoria,
+      descripcion,
+      estado: "abierto",
+      fecha: new Date().toLocaleString('es-AR')
+    };
+    this.tickets.push(ticket);
+    return ticket;
+  },
+  cerrarTicket(id, calificacion) {
+    const t = this.tickets.find(t => t.id === id);
+    if (t) { t.estado = "cerrado"; t.calificacion = calificacion; }
+    return t;
+  },
+  escalarTicket(id) {
+    const t = this.tickets.find(t => t.id === id);
+    if (t) t.estado = "escalado_N2";
+    return t;
+  }
+};
+
+/* ═══════════════════════════════════════════════
+   MÁQUINA DE ESTADOS
+═══════════════════════════════════════════════ */
+const ESTADOS = {
+  INICIO:          "INICIO",
+  ESPERANDO_NOMBRE:"ESPERANDO_NOMBRE",
+  ESPERANDO_CAT:   "ESPERANDO_CAT",
+  ESPERANDO_DESC:  "ESPERANDO_DESC",
+  MOSTRANDO_SOL:   "MOSTRANDO_SOL",
+  ESPERANDO_EVAL:  "ESPERANDO_EVAL",
+  ESPERANDO_CALIF: "ESPERANDO_CALIF",
+  FIN_OK:          "FIN_OK",
+  FIN_ESCALA:      "FIN_ESCALA"
+};
+
+let estado = {
+  fase:     ESTADOS.INICIO,
+  nombre:   null,
+  categoria:null,
+  desc:     null,
+  ticket:   null,
+  retries:  0,
+  MAX_RETRIES: 3
+};
+
+/* ═══════════════════════════════════════════════
+   UI HELPERS
+═══════════════════════════════════════════════ */
+const msgs   = document.getElementById('messages');
+const input  = document.getElementById('user-input');
+const sendBtn= document.getElementById('send-btn');
+
+function scrollDown() {
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function addMessage(quien, texto, tipo='normal') {
+  const wrap = document.createElement('div');
+  wrap.className = `bubble-wrap ${quien}`;
+
+  const av = document.createElement('div');
+  av.className = 'avatar-sm';
+  av.textContent = quien === 'bot' ? '🤖' : '👤';
+
+  const bub = document.createElement('div');
+  bub.className = 'bubble' + (tipo !== 'normal' ? ` ${tipo}` : '');
+  bub.textContent = texto;
+
+  wrap.appendChild(av);
+  wrap.appendChild(bub);
+  msgs.appendChild(wrap);
+  scrollDown();
+  return bub;
+}
+
+function addCard(ticket) {
+  const wrap = document.createElement('div');
+  wrap.className = 'bubble-wrap bot';
+  wrap.innerHTML = `<div class="avatar-sm">🤖</div>
+  <div class="ticket-card">
+    <div class="tk-id">📋 TICKET REGISTRADO</div>
+    <div class="tk-row"><span class="tk-label">ID:</span><span>${ticket.id}</span></div>
+    <div class="tk-row"><span class="tk-label">Usuario:</span><span>${ticket.nombre}</span></div>
+    <div class="tk-row"><span class="tk-label">Categoría:</span><span>${ticket.categoria}</span></div>
+    <div class="tk-row"><span class="tk-label">Descripción:</span><span>${ticket.descripcion}</span></div>
+    <div class="tk-row"><span class="tk-label">Estado:</span><span style="color:var(--accent2)">Abierto</span></div>
+    <div class="tk-row"><span class="tk-label">Fecha:</span><span>${ticket.fecha}</span></div>
+  </div>`;
+  msgs.appendChild(wrap);
+  scrollDown();
+}
+
+function addOptions(opciones, callback) {
+  const div = document.createElement('div');
+  div.className = 'options';
+  opciones.forEach((op, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = op.label;
+    btn.onclick = () => {
+      div.querySelectorAll('.opt-btn').forEach(b => b.disabled = true);
+      addMessage('user', op.label);
+      callback(op.value, op.label);
+    };
+    div.appendChild(btn);
+  });
+  msgs.appendChild(div);
+  scrollDown();
+}
+
+function addStars() {
+  const div = document.createElement('div');
+  div.className = 'stars';
+  for (let i = 1; i <= 5; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'star-btn';
+    btn.textContent = '★';
+    btn.title = `${i} estrella${i>1?'s':''}`;
+    btn.onclick = () => {
+      div.querySelectorAll('.star-btn').forEach((b,j) => {
+        b.classList.toggle('active', j < i);
+        b.disabled = true;
+      });
+      addMessage('user', `${'★'.repeat(i)}${'☆'.repeat(5-i)} (${i}/5)`);
+      procesarCalificacion(i);
+    };
+    div.appendChild(btn);
+  }
+  msgs.appendChild(div);
+  scrollDown();
+}
+
+function showTyping() {
+  const wrap = document.createElement('div');
+  wrap.className = 'bubble-wrap bot';
+  wrap.id = 'typing-indicator';
+  wrap.innerHTML = `<div class="avatar-sm">🤖</div>
+    <div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  msgs.appendChild(wrap);
+  scrollDown();
+  return wrap;
+}
+
+function removeTyping() {
+  const el = document.getElementById('typing-indicator');
+  if (el) el.remove();
+}
+
+function botResponde(texto, tipo='normal', delay=600) {
+  return new Promise(resolve => {
+    const t = showTyping();
+    setTimeout(() => {
+      removeTyping();
+      addMessage('bot', texto, tipo);
+      resolve();
+    }, delay);
+  });
+}
+
+function actualizarDebug() {
+  document.getElementById('dbg-state').textContent  = estado.fase;
+  document.getElementById('dbg-user').textContent   = estado.nombre  || '—';
+  document.getElementById('dbg-cat').textContent    = estado.categoria || '—';
+  document.getElementById('dbg-ticket').textContent = estado.ticket?.id || '—';
+  document.getElementById('dbg-retries').textContent= estado.retries;
+}
+
+function bloquearInput(bl) {
+  input.disabled  = bl;
+  sendBtn.disabled= bl;
+}
+
+/* ═══════════════════════════════════════════════
+   VALIDACIONES (Camino Infeliz)
+═══════════════════════════════════════════════ */
+function validarNombre(txt) {
+  if (!txt || txt.trim().length < 2)
+    return { ok: false, msg: '⚠️ El nombre debe tener al menos 2 caracteres. ¿Cómo te llamás?' };
+  if (/\d/.test(txt))
+    return { ok: false, msg: '⚠️ El nombre no debería contener números. Intentá de nuevo.' };
+  return { ok: true };
+}
+
+function validarCategoria(txt) {
+  const n = parseInt(txt);
+  if (isNaN(n) || n < 1 || n > 4)
+    return { ok: false, msg: '⚠️ Por favor ingresá un número entre 1 y 4.' };
+  return { ok: true, valor: String(n) };
+}
+
+function validarDescripcion(txt) {
+  if (!txt || txt.trim().length < 5)
+    return { ok: false, msg: '⚠️ La descripción es muy corta. Contame un poco más sobre el problema.' };
+  return { ok: true };
+}
+
+/* ═══════════════════════════════════════════════
+   LÓGICA DE ESTADOS
+═══════════════════════════════════════════════ */
+async function procesarMensaje(texto) {
+  bloquearInput(true);
+  const txt = texto.trim();
+
+  switch (estado.fase) {
+
+    /* ── ESPERANDO NOMBRE ── */
+    case ESTADOS.ESPERANDO_NOMBRE: {
+      const v = validarNombre(txt);
+      if (!v.ok) {
+        estado.retries++;
+        actualizarDebug();
+        if (estado.retries >= estado.MAX_RETRIES) {
+          await botResponde('Tuviste demasiados intentos inválidos. Reiniciando la sesión...', 'error');
+          setTimeout(resetBot, 2000);
+          return;
+        }
+        await botResponde(v.msg, 'warn');
+        break;
+      }
+      estado.nombre  = txt.trim();
+      estado.retries = 0;
+      estado.fase    = ESTADOS.ESPERANDO_CAT;
+      actualizarDebug();
+
+      await botResponde(`¡Hola, ${estado.nombre}! 👋 Voy a ayudarte a resolver tu problema.\n\nIndicá el número de categoría:`);
+      addOptions([
+        { label: '1 · Hardware',            value: '1' },
+        { label: '2 · Software',            value: '2' },
+        { label: '3 · Red / Conectividad',  value: '3' },
+        { label: '4 · Acceso / Contraseñas',value: '4' }
+      ], procesarCategoria);
+      bloquearInput(false);
+      return;
+    }
+
+    /* ── ESPERANDO DESCRIPCIÓN ── */
+    case ESTADOS.ESPERANDO_DESC: {
+      const v = validarDescripcion(txt);
+      if (!v.ok) {
+        estado.retries++;
+        actualizarDebug();
+        await botResponde(v.msg, 'warn');
+        break;
+      }
+      estado.desc    = txt;
+      estado.retries = 0;
+
+      const ticket = DB.crearTicket(estado.nombre, DB.categorias[estado.categoria].nombre, estado.desc);
+      estado.ticket = ticket;
+      estado.fase   = ESTADOS.MOSTRANDO_SOL;
+      actualizarDebug();
+
+      await botResponde('Registré tu ticket en el sistema.');
+      addCard(ticket);
+
+      // Solución según categoría
+      const cat = DB.categorias[estado.categoria];
+      await botResponde(`Categoría detectada: **${cat.nombre}** 🔧\n\nProbá estos pasos:`);
+      const pasos = cat.soluciones.map((s,i) => `${i+1}. ${s}`).join('\n');
+      await botResponde(pasos);
+
+      estado.fase = ESTADOS.ESPERANDO_EVAL;
+      actualizarDebug();
+
+      await botResponde('¿Lograste resolver el problema?');
+      addOptions([
+        { label: '✅ Sí, quedó resuelto', value: 'si'  },
+        { label: '❌ No, sigue el problema', value: 'no' }
+      ], procesarEvaluacion);
+      bloquearInput(false);
+      return;
+    }
+
+    /* ── ENTRADA INESPERADA ── */
+    default: {
+      estado.retries++;
+      actualizarDebug();
+      await botResponde('No esperaba esa respuesta. Por favor usá los botones o escribí lo que se indica.', 'warn');
+      break;
+    }
+  }
+
+  bloquearInput(false);
+  actualizarDebug();
+}
+
+async function procesarCategoria(valor, label) {
+  bloquearInput(true);
+  const v = validarCategoria(valor);
+  if (!v.ok) {
+    estado.retries++;
+    actualizarDebug();
+    await botResponde(v.msg, 'warn');
+    bloquearInput(false);
+    return;
+  }
+  estado.categoria = v.valor;
+  estado.retries   = 0;
+  estado.fase      = ESTADOS.ESPERANDO_DESC;
+  actualizarDebug();
+
+  await botResponde(`Categoría seleccionada: ${label}.\n\nDescribí brevemente el problema:`);
+  bloquearInput(false);
+}
+
+async function procesarEvaluacion(valor) {
+  bloquearInput(true);
+
+  if (valor === 'si') {
+    estado.fase = ESTADOS.ESPERANDO_CALIF;
+    actualizarDebug();
+    await botResponde('¡Genial! Me alegra que se haya resuelto. 🎉\n\nCalificá la atención del 1 al 5:');
+    addStars();
+
+  } else {
+    DB.escalarTicket(estado.ticket.id);
+    estado.fase = ESTADOS.FIN_ESCALA;
+    actualizarDebug();
+    await botResponde(`Entendido. Escalé tu ticket **${estado.ticket.id}** a un técnico de Nivel 2.\n\nTe contactarán a la brevedad. ¡Gracias por tu paciencia, ${estado.nombre}! 🙏`, 'warn');
+    bloquearInput(true);
+    return;
+  }
+
+  bloquearInput(false);
+}
+
+async function procesarCalificacion(valor) {
+  bloquearInput(true);
+  DB.cerrarTicket(estado.ticket.id, valor);
+  estado.fase = ESTADOS.FIN_OK;
+  actualizarDebug();
+
+  const msgs_calif = [
+    '',
+    'Gracias por tu calificación. Seguiremos mejorando. 🙏',
+    'Entendemos que podemos mejorar. Tu opinión nos ayuda.',
+    'Bien. Trabajamos para hacerlo mejor cada día.',
+    '¡Gracias! Tu opinión nos motiva. 😊',
+    '¡Excelente! Nos alegra haber podido ayudarte. ⭐'
+  ];
+
+  await botResponde(`${msgs_calif[valor]}\n\nTu ticket **${estado.ticket.id}** fue cerrado exitosamente.\n¡Hasta la próxima, ${estado.nombre}!`);
+  bloquearInput(true);
+}
+
+/* ═══════════════════════════════════════════════
+   INICIO DEL FLUJO
+═══════════════════════════════════════════════ */
+async function iniciarBot() {
+  bloquearInput(true);
+  estado.fase = ESTADOS.ESPERANDO_NOMBRE;
+  actualizarDebug();
+
+  await botResponde('¡Hola! Soy SoporteBot, el asistente de soporte técnico de TechCorp. 👋', 'normal', 400);
+  await botResponde('Estoy aquí para ayudarte a resolver problemas técnicos de Nivel 1.', 'normal', 800);
+  await botResponde('Para comenzar, ¿cuál es tu nombre?', 'normal', 600);
+
+  bloquearInput(false);
+  input.focus();
+}
+
+function resetBot() {
+  estado = { fase: ESTADOS.INICIO, nombre: null, categoria: null, desc: null, ticket: null, retries: 0, MAX_RETRIES: 3 };
+  msgs.innerHTML = '';
+  bloquearInput(false);
+  actualizarDebug();
+  iniciarBot();
+}
+
+/* ═══════════════════════════════════════════════
+   EVENT LISTENERS
+═══════════════════════════════════════════════ */
+function handleUserInput() {
+  const txt = input.value.trim();
+  if (!txt) return;
+  addMessage('user', txt);
+  input.value = '';
+  procesarMensaje(txt);
+}
+
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleUserInput();
+});
+
+/* ── ARRANQUE ── */
+iniciarBot();
+</script>
+</body>
+</html>
