@@ -1,0 +1,95 @@
+SoporteBot – Chatbot de Soporte Técnico
+Nivel 1
+Trabajo Práctico Integrador – Organización Empresarial
+Tecnicatura Universitaria en Programación (TUP) – UTN
+Alumno: Ian Battiston
+Año: 2025
+Descripción
+Simulador web de un chatbot que automatiza el proceso de Soporte Técnico Nivel 1 de la
+organización ficticia TechCorp. El bot ayuda al usuario desde el reporte de un problema hasta su
+solución, siguiendo el flujo modelado en el diagrama BPMN 2.0.
+Estructura del repositorio
+tpi-soporte-tecnico/
+│
+├── chatbot_soporte.html # Simulador web (archivo único, sin dependencias)
+├── diagrama_bpmn.svg # Diagrama BPMN 2.0 en alta resolución
+├── tickets_ejemplo.json # Ejemplo de estructura de datos de tickets
+├── README.md
+│
+└── capturas/
+├── bot_flujo_normal.png
+├── bot_camino_infeliz.png
+└── consultas_ia/
+Cómo ejecutar el simulador
+Opción A – Directamente en el navegador
+1. Descargá el archivo chatbot_soporte.html
+2. Hacé doble clic para abrirlo en cualquier navegador moderno
+3. Y listo no requiere instalación ni conexión a internet
+Opción B – Clonar el repositorio
+bash
+git clone https://github.com/iano631/TPI-Soporte-Tecnico.git
+cd tpi-soporte-tecnico
+# Abrir chatbot_soporte.html en el navegador
+Tecnologías utilizadas
+Componente Tecnología
+Frontend HTML5 + CSS3 + JavaScript (vanilla)
+Lógica del bot Máquina de estados (switch/case)
+Persistencia
+simulada
+Objeto JSON en memoria
+Plataforma Navegador web
+IA de asistencia Claude (Anthropic)
+Flujo del proceso (resumen BPMN)
+INICIO
+└─► El bot saluda y solicita nombre
+└─► Usuario ingresa nombre
+└─► Bot presenta 4 categorías
+└─► Usuario elige categoría
+└─► Bot solicita descripción
+└─► Usuario describe el problema
+└─► Bot registra ticket + envía solución
+├─► ¿Resuelto? SÍ ──► Calificación ──► FIN OK
+└─► ¿Resuelto? NO ──► Escala a N2 ──► FIN N2
+Máquina de estados
+El bot realiza los siguientes estados:
+Estado Descripción
+INICIO Estado inicial
+ESPERANDO_NOM
+BRE
+espera el nombre del usuario
+ESPERANDO_CAT espera la selección de la
+categoría
+ESPERANDO_DES
+C
+espera la descripción del
+problema
+MOSTRANDO_SOL muestra la solución
+ESPERANDO_EVA
+L
+espera la confirmación del
+usuario
+ESPERANDO_CAL
+IF
+espera una calificación (1-5)
+FIN_OK Ticket cerrado
+FIN_ESCALA Ticket escalado a Nivel 2
+Manejo de errores (Camino Infeliz)
+Situación Comportamiento del bot
+Nombre con menos de 2
+caracteres
+Avisa y vuelve a preguntar
+Nombre con números Avisa y vuelve a preguntar
+Descripción muy corta (< 5 chars) Avisa y vuelve a preguntar
+Texto fuera de contexto Redirige al paso actual
+3 errores consecutivos Reinicia la sesión
+automáticamente
+Problema no resuelto Escala el ticket a Nivel 2
+Documentación
+El informe completo del TPI (TPI_OE_Ian_Battiston.docx) incluye:
+● Análisis del proceso as-is y to-be
+● Diagrama BPMN 2.0 con descripción de elementos
+● Arquitectura técnica y stack utilizado
+● Diccionario de datos
+● Manual de usuario
+● Pruebas de robustez
+● Justificación de herramientas de IA  
